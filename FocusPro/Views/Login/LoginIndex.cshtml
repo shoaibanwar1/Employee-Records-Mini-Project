@@ -1,0 +1,81 @@
+﻿    @model FocusPro.Models.EmployeeDO
+
+    @{
+     Layout = null;
+    }
+ 
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Login</title>
+    <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#btnSave").click(function (e) {
+                e.preventDefault(); // Prevent the default form submission
+                var username = $("#txtEmployeeId").val();
+                var password = $("#txtEmployeeName").val();
+
+                // Check if username and password are not empty
+                if (!username || !password) {
+                    alert("Please enter both username and password.");
+                    return; // Exit the function if fields are not filled
+                }
+
+                var employeeId = $("#txtEmployeeId").val();
+                var employeeName = $("#txtEmployeeName").val();
+
+                $.ajax({
+                        url: "@(Url.Action("LoginIndex", "Login"))", // Specify the URL for the Login action
+                        type: "POST",
+                        data: { employeeId: employeeId, employeeName: employeeName},
+                        success: function (data) {
+                            if (data.success) {
+                                clearTextboxes();
+                                // Redirect to Employee Index page on successful login
+                                window.location.href = "@Url.Action("EmployeeIndex", "Employee")";
+                            } else {
+                                // Handle unsuccessful login
+                                alert("Login failed. Please check your credentials.");
+                            }
+                        },
+                        error: function () {
+                            alert("An error occurred while processing the request.");
+                        }
+                    });
+            });
+            $("#btnClear").click(function () {
+                clearTextboxes();
+            });
+        });
+
+        // Function to clear textbox values
+        function clearTextboxes() {
+            $("#txtEmployeeId").val("");
+            $("#txtEmployeeName").val("");
+        }
+     </script>
+
+
+      </head>
+      <body>
+      <div>
+          <table>
+            <tr>
+                <td>User Id</td>
+                <td> <input type="text" id="txtEmployeeId" name="employeeId" value="" /> </td>
+            </tr>
+            <tr>
+                <td>User Name</td>
+                <td> <input type="text" id="txtEmployeeName" name="employeeName" value="" /> </td>
+            </tr>
+            <tr>
+                <td> <input type="button" id="btnSave" value="Login" /> </td>
+                <td> <input type="reset" id="btnClear" value="Clear" /> </td>
+            </tr>
+          </table>
+        </div>
+     </body>
+    </html>
+
+

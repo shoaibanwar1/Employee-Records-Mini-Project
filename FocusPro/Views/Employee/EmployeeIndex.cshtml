@@ -1,0 +1,382 @@
+﻿@model FocusPro.Models.EmployeeDO
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>EmployeeIndex</title>
+    <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript">
+       $(document).ready(function () {
+                  $("#dropdownState").change(function () {
+                       var stateName = $("#dropdownState").val();
+                        $.ajax({
+                           url: "@(Url.Action("GetCitiesWithStateName", "Employee"))",
+                           type: 'GET',
+                           dataType: 'json', 
+                           data: { stateName:stateName },
+                           success: function (result) {
+                            $("#dropdownCities").empty();
+                            $("#dropdownCities").append($("<option></option>").val("-Select City-").html("-Select City-"));
+                               $.each(result, function (i, cities)
+                               {
+                            $("#dropdownCities").append($("<option></option>").val(cities.CityName).html(cities.CityName));
+                             });
+                           },
+                         error: function () {}
+                     });//ajax close for city
+                   });//state close
+           $("#btnSaveUpdate").click(function () {
+                 debugger;
+                var valid1 = false;
+                var msg = "";
+                if ($("#txtEmployeeName").val() == "") {
+                    msg += "Please enter EmployeeName\n";
+                }
+                if ($("#radioMale").is(":checked") == false && $("#radioFeMale").is(":checked")==false){
+                    msg += "Please Select Gender\n";
+                }
+                if ($("#checkboxPlaying").is(":checked") == false && $("#checkboxReading").is(":checked") == false && $("#checkboxSinging").is(":checked") == false)
+                {
+                    msg += "Please select Hobbies\n";
+                }
+                if ($("#dropdownState").val() == "" || $("#dropdownState") == "-select state-") {
+                    msg += "Please Select State\n";
+                }
+                if ($("#dropdownCities").val() == "" || $("#dropdownCities").val() == "-Select City-") {
+                    msg += "Please Select City\n";
+                }
+                if (msg.length > 0) {
+                    alert(msg);
+                }
+                else {
+                    var employeeDO = {};
+                    employeeDO.EmployeeId = $("#txtEmployeeId").val();
+                    employeeDO.EmployeeName = $("#txtEmployeeName").val();
+                    employeeDO.Hobbies = "";
+                    if ($("#radioMale").is(":checked") == true) {
+                        employeeDO.Gender = $("#radioMale").val();
+                    }
+                    else if ($("#radioFeMale").is(":checked") == true) {
+                        employeeDO.Gender = $("#radioFeMale").val();
+                    }
+                    if ($("#checkboxPlaying").is(":checked") == true) {
+                        employeeDO.Hobbies = $("#checkboxPlaying").val()+",";
+                    }
+                    if ($("#checkboxReading").is(":checked") == true) {
+                        employeeDO.Hobbies += $("#checkboxReading").val()+",";
+                    }
+                    if ($("#checkboxSinging").is(":checked") == true) {
+                        employeeDO.Hobbies += $("#checkboxSinging").val();
+                    }
+                    employeeDO.StateName = $("#dropdownState").val();
+                    employeeDO.CityName = $("#dropdownCities").val();
+                    var type1 = "";
+                    if ($("#btnSaveUpdate").val() == "Save") {
+                        type1 = "insert";
+                    }
+                    else if ($("#btnSaveUpdate").val() == "Update") {
+                        type1 = "update";
+                    }
+
+                    @*$.ajax({
+                        url: "@(Url.Action("InsertOrUpdateEmployeeDetails", "Employee"))",
+                        type: "POST",
+                        dataType: "JSON",
+                        data: JSON.stringify({"employeeDO":employeeDO,"type1":type1}),
+                        contentType: "application/json;charset=utf-8",
+                        success: function (result) {
+                            debugger;
+                            console.log("insert");
+                            $("#btnSaveUpdate").val("Save");
+                            alert(result);
+                        },
+                        error: function () {
+                            alert("Failed")
+                        }
+                    }); //ajax for btnSaveUpdateClose*@
+
+                        
+                      $.ajax({
+                        url: "@(Url.Action("InsertOrUpdateEmployeeDetails", "Employee"))",
+                        type: "POST",
+                        dataType: "JSON",
+                        data: JSON.stringify({"employeeDO":employeeDO,"type1":type1}),
+                        contentType: "application/json;charset=utf-8",
+                        success: function (result) {
+                             debugger;
+                            console.log("insert");
+                            if (result.EmployeeName === "Name already exists") {
+                                alert("The name you entered already exists.");
+                            }
+                            else {
+                                $("#btnSaveUpdate").val("Save");
+                                alert(result);
+                                //btnClear();
+                            }
+
+                        },
+                        error: function () {
+                            alert("Failed")
+                        }
+                    }); //ajax for btnSaveUpdateClose
+                }
+                location.reload();
+           }); //btnSaveUpdateClosed
+
+           $("#btnClear").click(function () {
+               clearControlls();
+           });
+        });
+
+         function clearControlls() {
+            $("#txtEmployeeId").val("");
+            $("#txtEmployeeName").val("");
+            $("#radioMale").prop("checked", false);
+            $("#radioFeMale").prop("checked", false);
+            $("#checkboxPlaying").prop("checked", false);
+            $("#checkboxReading").prop("checked", false);
+            $("#checkboxSinging").prop("checked", false);
+            $("#dropdownState").val("-select state-");
+            $("#dropdownCities").empty();
+            $("#dropdownCities").append($("<option></option>").val("-Select City-").html("-Select City-"));
+            $("#btnSaveUpdate").val("Save");
+            }
+                function SearchEmployeeWithId(empId)
+                {
+                    debugger;
+                    console.log("empId"+empId);
+                 var employeeDO = {};
+                 employeeDO.EmployeeId = parseInt(empId);
+                   $.ajax({
+                   url: "@(Url.Action("SearchEmployeeWithId", "Employee"))",
+                   type: "POST",
+                   dataType: "JSON",
+                   data: JSON.stringify(employeeDO),
+                   contentType: "application/json;charset=utf-8",
+                   success: function (result) {
+                    $("#btnSaveUpdate").val("Update");
+                    $("#txtEmployeeId").val(result.employeeDO.EmployeeId);
+                    $("#txtEmployeeName").val(result.employeeDO.EmployeeName);
+                    if (result.employeeDO.Gender == "Male") {
+                        $("#radioMale").prop("checked", true);
+                       }
+                    else if (result.employeeDO.Gender == "FeMale")
+                      {
+                     $("#radioFeMale").prop("checked", true);
+                      }
+                   if (result.employeeDO.Hobbies.includes("Playing"))
+                      {
+                   $("#checkboxPlaying").prop("checked", true);
+                      }
+                   if (result.employeeDO.Hobbies.includes("Reading"))
+                      {
+                        $("#checkboxReading").prop("checked", true);
+                      }
+                   if (result.employeeDO.Hobbies.includes("Singing"))
+                       {
+                        $("#checkboxSinging").prop("checked", true);
+                       }
+
+                  @*$("#dropdownState option[value=" + result.employeeDO.StateName + "]").attr('selected', 'selected');
+                    var stateName = $("#dropdownState").val();
+                        $.ajax({
+                        url: "@(Url.Action("GetCitiesWithStateName", "Employee"))",
+                        type: 'GET',
+                        dataType: 'json',
+                        data: { stateName: stateName },
+                            success: function (result2) {
+                                console.log("cascading ffl" + result2);
+                            $("#dropdownCities").empty();
+                            $("#dropdownCities").append($("<option></option>").val("-Select City-").html("-Select City-"));
+                            $.each(result2, function (i, cities) {
+
+                                $("#dropdownCities").append($("<option></option>").val(cities.CityName).html(cities.CityName));
+                            });
+                            $("#dropdownCities option[value=" + result.employeeDO.CityName + "]").attr('selected', 'selected');
+                        }
+                    });*@
+
+
+                       $("#dropdownState option[value=" + result.employeeDO.StateName + "]").prop('selected', true);
+                       var stateName = $("#dropdownState").val();
+                       $.ajax({
+                           url: "/Employee/GetCitiesWithStateName", // Assuming this is the correct URL
+                           type: 'GET',
+                           dataType: 'json',
+                           data: { stateName: stateName },
+                           success: function (result2) {
+                               console.log("cascading ffl" + result2);
+                               $("#dropdownCities").empty();
+                               // Assuming you don't want to keep the "-Select City-" option after emptying
+                               // $("#dropdownCities").append($("<option></option>").val("-Select City-").html("-Select City-"));
+                               $.each(result2, function (i, cities) {
+                                   $("#dropdownCities").append($("<option></option>").val(cities.CityName).html(cities.CityName));
+                               });
+                               // Check if the selected city exists in the options before selecting it
+                               var selectedCity = result.employeeDO.CityName;
+                               if ($("#dropdownCities option[value='" + selectedCity + "']")) {
+                                   $("#dropdownCities").val(selectedCity);
+                               }
+                           }
+                       });
+
+                    //
+                       $("#dropdownCities").val(result.CityName);
+                 }
+            });
+        }
+        function confirmDelete(employeeId) {
+            var confirmDelete = confirm("Are you sure want to delete this record?");
+            if (confirm) {
+                $.ajax({
+                    url: "@(Url.Action("DeleteEmployeeWithId", "Employee"))",
+                    type: "Get",
+                    dataType: "JSON",
+                    data: { "employeeId": employeeId },
+                    contentType: "application/json;charset=utf-8",
+                    success: function (result) {
+                        window.location.href = "@(Url.Action("EmployeeIndex","Employee"))"
+                    },
+                    error: function () { }
+
+                });
+            }
+            
+        }
+
+        //For In activity TimeOut 
+
+        var inactivityTimeout = 2 * 60 * 1000; // 2 minutes in milliseconds
+        var inactivityTimer;
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(function () {
+                showLogoutAlert(); // Show the logout alert
+                setTimeout(function () {
+                 //   window.location.href = '/Login/Logout'; // Redirect to logout action
+                    window.location.href = "@(Url.Action("Logout", "Login"))"; // Redirect to logout action
+                }, 3000); // Redirect after 3 seconds
+            }, inactivityTimeout);
+        }
+
+        function showLogoutAlert() {
+            alert("You are logged out. Please login.");
+        }
+
+
+        // Attach event listeners to reset the timer on user activity
+        $(document).on('mousemove keydown click', function () {
+            resetInactivityTimer();
+        });
+
+        // Initial setup
+        resetInactivityTimer();
+
+        // Logout link click event
+        $('#logoutLink').click(function (event) {
+            event.preventDefault();
+            showLogoutAlert();
+            setTimeout(function () {
+            //    window.location.href = '/Login/Logout'; // Redirect to logout action
+                window.location.href = "@(Url.Action("Logout", "LoginIndex"))";//Redirect to logout action
+            }, 3000); // Redirect after 3 seconds
+        });
+          //This is all about logout
+          </script>
+    </head>
+    <body>
+     <div>
+        <table>
+            <tr>
+                <td>EmployeeId</td>
+                <td> <input type="text" id="txtEmployeeId" value="" readonly /> </td>
+            </tr>
+            <tr>
+                <td>EmployeeName</td>
+                <td> <input type="text" id="txtEmployeeName" value="" /> </td>
+            </tr>
+            <tr>
+                <td>Gender</td>
+                <td>
+                    <input type="radio" id="radioMale" name="radioGender" value="Male" /> Male
+                    &nbsp;&nbsp;
+                    <input type="radio" id="radioFeMale" name="radioGender" value="FeMale" /> Female
+                </td>
+            </tr>
+            <tr>
+                <td>Hobbies</td>
+                <td>
+                    <input type="checkbox" id="checkboxPlaying" value="Playing" /> Playing
+                    <input type="checkbox" id="checkboxReading" value="Reading" /> Reading
+                    <input type="checkbox" id="checkboxSinging" value="Singing" /> Singing
+                </td>
+            </tr>
+            <tr>
+                <td>State</td>
+                <td>
+                    <select id="dropdownState">
+                        <option value="-select state-">-select state-</option>
+                        @foreach (var state in TempData["liStatesDOs"] as IEnumerable<FocusPro.Models.StatesDO>)
+                          {
+                            <option value="@state.StateName">@state.StateName</option>
+                          }
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Cities</td>
+                <td>
+                    <select id="dropdownCities">
+                        <option value="-Select City-">-Select City-</option>
+                    </select>
+                </td>
+            </tr>
+            <tr><td></td></tr>
+            <tr><td></td></tr>
+            <tr>
+                <td> <input type="submit" id="btnSaveUpdate" value="Save" /> </td>
+                <td> <input type="submit" id="btnClear" value="Clear" /> </td>
+            </tr>
+        </table>
+    </div>
+    <div>
+        <br /> <br /> <br />
+        <table border="1">
+            <tr>
+                <th>EmployeeId</th>
+                <th>EmployeeName</th>
+                <th>Gender</th>
+                <th>Hobbies</th>
+                <th>StateName</th>
+                <th>CityName</th>
+                <th>Delete</th>
+                <th>Edit</th>
+            </tr>
+            @foreach (var item in TempData["liemployeeDOs"] as IEnumerable<FocusPro.Models.EmployeeDO>)
+            {
+                <tr>
+                    <td>@item.EmployeeId</td>
+                    <td>@item.EmployeeName</td>
+                    <td>@item.Gender</td>
+                    <td>@item.Hobbies</td>
+                    <td>@item.StateName</td> 
+                    <td>@item.CityName</td>
+                    <td>
+                        @*@Html.ActionLink("Delete", "DeleteEmployeeWithId", new { @item.EmployeeId })*@
+
+                        <a href="#" onclick="confirmDelete(@item.EmployeeId)">Delete</a>
+
+                    </td>
+                    <td>
+                        <a href="#" onclick="SearchEmployeeWithId(@item.EmployeeId)">Edit</a>
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+</body>
+</html>
